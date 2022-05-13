@@ -1,0 +1,105 @@
+Options:
+	P: &6&lCHATREPORT &f❙
+
+
+
+on join:
+	if player have permission "chat.ouvrier":
+		set {grade.%player%} to "&7Ouvrier"
+	if player have permission "chat.prince":
+		set {grade.%player%} to "&aPrince"
+	if player have permission "chat.roi":
+		set {grade.%player%} to "&eRoi"
+	if player have permission "chat.reine":
+		set {grade.%player%} to "&5Reine"
+	if player have permission "chat.mini-youtubeur":
+		set {grade.%player%} to "&6Mini-Youtubeur"
+	if player have permission "chat.youtubeur":
+		set {grade.%player%} to "&6Youtubeur"
+	if player have permission "chat.builder":
+		set {grade.%player%} to "&2Builder"
+	if player have permission "chat.helper":
+		set {grade.%player%} to "&2Helper"
+	if player have permission "chat.moderateur":
+		set {grade.%player%} to "&9Modérateur"
+	if player have permission "chat.moderateur+":
+		set {grade.%player%} to "&cModérateur+"
+	if player have permission "chat.ouvrier" and "chat.prince" and "chat.roi" and "chat.reine" and "chat.mini-youtubeur" and "chat.youtubeur" and "chat.builder" and "chat.helper" and "chat.moderateur" and "chat.moderateur+":
+		set {grade.%player%} to "&cAdmin"
+
+
+On chat:
+	cancel event
+	add "%now% |-| %player% |-| %message%" to {Messages.::*}
+	set {_Nombre} to "%size of {Messages.::*}%"
+	make console execute command "/tellraw @a [{""text"":""&c⚠"",""clickEvent"":{""action"":""run_command"",""value"":""/chatreport report %player% %{_Nombre}% %message%""},""hoverEvent"":{""action"":""show_text"",""value"":""&cSignaler ce message""}},{""text"":"" %{grade.%player%}% %player% &e%{symbole.chat.utilisation.%player%}% &f%message%""}]"
+
+Command /chatreport [<text>] [<offline player>] [<text>] [<text>]:
+	trigger:
+		if arg 4 isn't set:
+			if sender is player:
+				if player has permission "ChatReport.Perm":
+					if {ChatReport.Recive.%player%} is set:
+						delete {ChatReport.Recive.%player%}
+						send "{@P} &cVous avez désactivé les notifications !"
+					else:
+						set {ChatReport.Recive.%player%} to now
+						send "{@P} &aVous avez activé les notifications !"
+					stop
+			send "{@P} &cVous n'avez pas la permission !"
+			if sender is console:
+				send "&7(Permission refusé pour la &4&lCONSOLE&7)"
+			stop
+		if arg 1 is "ValideSanction":
+			if "%player%" is "%arg 2%":
+				send "{@P} &cImpossible de vous report !"
+				stop
+			if {Message.Report.%arg 3%} is set:
+				send "{@P} &cMessage déjà report !"
+				stop
+			send "&2Le joueur a bien été sanctionné !"
+			set {Message.Report.%arg 3%} to now
+			#Sanction
+			stop
+		if arg 1 is "Valide":
+			if "%player%" is "%arg 2%":
+				send "{@P} &cImpossible de vous report !"
+				stop
+			if {Message.Report.%arg 3%} is set:
+				send "{@P} &cMessage déjà report !"
+				stop
+			send "&aLe joueur a bien été signalé ! Merci !"
+			set {Message.Report.%arg 3%} to now
+			loop all players:
+				if loop-player has permission "ChatReport.Perm":
+				# if loop-player is OP:
+					if {ChatReport.Recive.%loop-player%} is set:
+						send "&9" to loop-player
+						send "&f  &f» &6&lCHATREPORT &f«" to loop-player
+						send "&9" to loop-player
+						send "&f &8❙ &7ID: &e%arg 3%" to loop-player
+						send "&f &8❙ &7Joueur signalé: &6%arg 2%" to loop-player
+						send "&f &8❙ &7Report par: &b%sender%" to loop-player
+						send "&f &8❙ &7Message : &7&o“&f%arg 4%&7&o”" to loop-player
+						send " " to loop-player
+						execute console command "/tellraw %loop-player% [{""text"":"""",""extra"":[{""text"":""&e[Sanctionner]"",""clickEvent"":{""action"":""run_command"",""value"":""/mute %arg 2% 10m Message incorrect !""},""hoverEvent"":{""action"":""show_text"",""value"":""&7(Secret)""}}]}]"
+						send "&7" to loop-player
+			stop
+		if arg 1 is "Report":
+			if "%player%" is "%arg 2%":
+				send "{@P} &cImpossible de vous report !"
+				stop
+			if {Message.Report.%arg 3%} is set:
+				send "{@P} &cMessage déjà report !"
+				stop
+			send "&c"
+			send "&f &8❙ &7Voulez-vous signaler le message de &b%arg 2% &f? &7(ID: %arg 3%)"
+			send "&7&o“&f%arg 4%&7&o”"
+			send " "
+			if player has permission "ChatReport.Perm":
+			# if player is op:
+				make console execute command "/tellraw %player% ["""",{""text"":""&e[Oui, sanctionner %arg 2% !]"",""color"":""yellow"",""clickEvent"":{""action"":""run_command"",""value"":""/chatreport ValideSanction %arg 2% %arg 3% %arg 4%""},""hoverEvent"":{""action"":""show_text"",""value"":""Clic gauche pour sanctionner !.""}}]"
+			else:
+				make console execute command "/tellraw %player% ["""",{""text"":""&e[Oui, signaler %arg 2% !]"",""color"":""yellow"",""clickEvent"":{""action"":""run_command"",""value"":""/chatreport Valide %arg 2% %arg 3% %arg 4%""},""hoverEvent"":{""action"":""show_text"",""value"":""Clic gauche pour signaler !.""}}]"
+			send "&b"
+			stop
